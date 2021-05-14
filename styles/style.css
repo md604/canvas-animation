@@ -26,6 +26,7 @@
     box-sizing: border-box;
 }
 
+.load-image,
 .run-animation,
 .revert-animation {
     height: 30px;
