@@ -1,8 +1,14 @@
 const btn = document.querySelector('.run-animation');
 const btnRevert = document.querySelector('.revert-animation');
+const btnLoadImage = document.querySelector('.load-image');
 const img = document.querySelector('.slide img');
 const animatedCanvas = document.querySelector('.slider-animation');
 const circles = [];
+const images = [
+    'https://cdn.shopify.com/s/files/1/0517/6197/1381/products/DPV10P1911401-5_355x@2x.jpg?v=1614348697',
+    'https://cdn.shopify.com/s/files/1/0517/6197/1381/products/DPC22P1784001-5_355x@2x.jpg?v=1617343465',
+    'https://cdn.shopify.com/s/files/1/0517/6197/1381/products/DPC42P3114701-5_355x@2x.jpg?v=1614348782'
+];
 let raf, startTime = 0;
 img.crossOrigin = "Anonymous";
 
@@ -206,6 +212,7 @@ const anim = (timestamp) => {
         window.cancelAnimationFrame(raf);
         console.log('Animation is stopped', raf);
         raf = 0;
+        emitImageIsCoveredEvent();
     } else {
         // safeguard killer switch
         // stop animation after N seconds if it didnt stop by itself
@@ -291,9 +298,39 @@ const comeBackLola = e => {
     startTime = 0;
     if (raf == 0) raf = window.requestAnimationFrame(anim);
 }
+const loadNewImage = () => {
+    const currentImageIndex = img.dataset.index / 1;
+    const newImageIndex = (currentImageIndex + 1) > (images.length - 1) ? 0 : currentImageIndex + 1;
+    return new Promise((resolve, reject) => {
+        const newImage = new Image();
+        newImage.src = images[newImageIndex];
+        newImage.onload = () => resolve(newImageIndex);
+        newImage.onerror = reject;
+    });
+}
+const emitImageIsCoveredEvent = () => {
+    // create and dispatch the event
+    const event = new CustomEvent('imageIsCovered');
+    img.dispatchEvent(event);
+}
+const changeImage = e => {
+    img.addEventListener('imageIsCovered', () => {
+        loadNewImage().then((i) => {
+            // replace the image
+            img.src = images[i];
+            img.dataset.index = i;
+            // unvail it
+            comeBackLola();
+        });
+    }, 
+    {
+        once : true // be careful, if false we will get into an infinite loop
+    });
+    runLolaRun();   
+}
 
 window.onload = (e) => {
-    console.log('coucou');
     btn.addEventListener('click', runLolaRun);
     btnRevert.addEventListener('click', comeBackLola);
+    btnLoadImage.addEventListener('click', changeImage);
 }
